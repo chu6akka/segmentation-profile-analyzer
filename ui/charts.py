@@ -69,11 +69,11 @@ class Charts(QWidget):
             ax.set_xlabel(label)
             ax.set_ylabel("Частота")
             ax.grid(axis="y", alpha=.2)
-        keys = ["one_word_ratio", "short_message_ratio", "no_standard_final_punctuation_ratio",
-                "lowercase_start_ratio", "long_series_ratio", "multi_sentence_ratio"]
-        labels = ["Однословные", "Короткие ≤3", "Без конечной пунктуации",
-                  "Со строчной буквы", "Серии ≥3", "Многопредложные (прибл.)"]
-        values = [analysis.profile[key] * 100 for key in keys]
+        keys = ["one_word_ratio", "short_message_ratio", "single_message_series_ratio",
+                "long_series_ratio", "no_standard_final_punctuation_ratio", "lowercase_start_ratio", "bracket_ending_ratio"]
+        labels = ["Однословные", "Короткие ≤3", "Одиночные серии", "Серии ≥3",
+                  "Без конечной пунктуации", "Со строчной буквы", "Скобочное окончание"]
+        values = [(analysis.profile[key] or 0) * 100 for key in keys]
         axes[2].barh(labels, values, color="#3a8b78")
         axes[2].set_xlim(0, 110)
         axes[2].set_xlabel("Доля, %")
@@ -81,3 +81,4 @@ class Charts(QWidget):
         for y, value in enumerate(values):
             axes[2].text(value + 1, y, f"{value:.1f}%", va="center")
         self.canvas.draw_idle()
+

@@ -6,6 +6,7 @@ import tempfile
 import pandas as pd
 
 from comparison import compare_profiles
+from profiles import aggregate_profiles, threshold_sensitivity, within_author_comparison, variability_comparison
 from features import Analysis
 
 
@@ -48,6 +49,27 @@ def export_xlsx(analysis: Analysis, path: str | Path) -> None:
 
 
 def export_comparison_xlsx(a: Analysis, b: Analysis, path: str | Path) -> None:
-    _write_sheets({"Profile_A": pd.DataFrame([a.profile]),
-                   "Profile_B": pd.DataFrame([b.profile]),
-                   "Comparison": compare_profiles(a, b)}, path)
+    _write_sheets({"Author_A": pd.DataFrame([a.profile]),
+                   "Author_B": pd.DataFrame([b.profile]),
+                   "Between_Author_Comparison": compare_profiles(a, b)}, path)
+
+
+def export_within_author_xlsx(analyses, path: str | Path) -> None:
+    sheets = {f"Profile_{i + 1}": pd.DataFrame([a.profile]) for i, a in enumerate(analyses)}
+    sheets["Within_Author_Comparison"] = within_author_comparison(analyses)
+    sheets["Aggregated_Profile"] = aggregate_profiles(analyses)
+    _write_sheets(sheets, path)
+
+
+def export_threshold_xlsx(chat, author, path: str | Path) -> None:
+    analyses, comparison = threshold_sensitivity(chat, author)
+    sheets = {f"Threshold_{n}": pd.DataFrame([a.profile]) for n, a in analyses.items()}
+    sheets["Threshold_Comparison"] = comparison
+    _write_sheets(sheets, path)
+
+
+def export_variability_xlsx(author_a, author_b, path: str | Path) -> None:
+    _write_sheets({"Author_A_Aggregated": aggregate_profiles(author_a),
+                   "Author_B_Aggregated": aggregate_profiles(author_b),
+                   "Variability_Comparison": variability_comparison(author_a, author_b)}, path)
+

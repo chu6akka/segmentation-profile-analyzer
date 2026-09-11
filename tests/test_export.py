@@ -22,7 +22,7 @@ def test_exports_and_comparison(tmp_path):
     comparison = compare_profiles(result, result)
     assert comparison.absolute_difference.dropna().eq(0).all()
     export_comparison_xlsx(result, result, tmp_path / "comparison.xlsx")
-    assert load_workbook(tmp_path / "comparison.xlsx").sheetnames == ["Profile_A", "Profile_B", "Comparison"]
+    assert load_workbook(tmp_path / "comparison.xlsx").sheetnames == ["Author_A", "Author_B", "Between_Author_Comparison"]
 
 
 def test_failed_export_preserves_existing_file(tmp_path):
@@ -34,3 +34,4 @@ def test_failed_export_preserves_existing_file(tmp_path):
     with pytest.raises(ValueError, match="32767"):
         export_xlsx(result, output)
     assert output.read_bytes() == b"existing content"
+

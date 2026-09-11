@@ -1,5 +1,5 @@
 import pandas as pd
-from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTabWidget, QTableView, QLabel, QFileDialog, QMessageBox
+from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTabWidget, QTableView, QLabel, QFileDialog, QMessageBox, QComboBox
 
 from export import export_csv, export_xlsx
 from features import analyze_author
@@ -7,6 +7,8 @@ from ui.charts import Charts
 from ui.common import FilePicker, set_table
 from ui.comparison_tab import ComparisonTab
 from ui.profile_tab import ProfileTab
+from ui.threshold_tab import ThresholdTab
+from ui.corpus_tab import CorpusTab
 
 
 class MainWindow(QMainWindow):
@@ -24,6 +26,12 @@ class MainWindow(QMainWindow):
         self.picker = FilePicker()
         layout.addWidget(self.picker)
         row = QHBoxLayout()
+        row.addWidget(QLabel("Порог серии:"))
+        self.threshold = QComboBox()
+        self.threshold.addItems(["5 мин", "10 мин", "30 мин"])
+        self.threshold.setCurrentText("10 мин")
+        self.threshold.currentTextChanged.connect(self.invalidate)
+        row.addWidget(self.threshold)
         self.analyze_button = QPushButton("Анализировать")
         self.analyze_button.clicked.connect(self.analyze)
         self.csv_button = QPushButton("Экспорт CSV")
@@ -39,7 +47,9 @@ class MainWindow(QMainWindow):
         self.messages = QTableView()
         self.charts = Charts()
         self.comparison = ComparisonTab()
-        for widget, label in [(self.profile, "Профиль"), (self.messages, "Сообщения"), (self.charts, "Графики"), (self.comparison, "Сравнение профилей")]:
+        self.threshold_tab = ThresholdTab()
+        self.corpus = CorpusTab()
+        for widget, label in [(self.profile, "Профиль"), (self.messages, "Сообщения"), (self.charts, "Графики"), (self.comparison, "Сравнение профилей"), (self.threshold_tab, "Проверка порога серии"), (self.corpus, "Корпус")]:
             self.tabs.addTab(widget, label)
         layout.addWidget(self.tabs, 1)
         note = QLabel("Приложение не осуществляет автоматическую идентификацию автора. Получаемые показатели предназначены для исследовательского и экспертно-аналитического использования и требуют интерпретации специалистом.")
@@ -60,9 +70,9 @@ class MainWindow(QMainWindow):
 
     def analyze(self):
         try:
-            result = analyze_author(self.picker.chat, self.picker.author)
+            result = analyze_author(self.picker.chat, self.picker.author, int(self.threshold.currentText().split()[0]))
             self.profile.display(result)
-            columns = {"message_id": "№", "datetime": "Время", "text": "Текст", "word_count": "Слов", "series_id": "Номер серии", "position_in_series": "Позиция в серии", "series_length": "Длина серии"}
+            columns = {"message_id": "message_id", "datetime": "datetime", "author": "author", "text": "text", "word_count": "word_count", "series_id": "series_id", "position_in_series": "position_in_series", "series_length": "series_length", "time_gap_from_previous_same_author": "time_gap_from_previous_same_author", "is_reply": "is_reply", "reply_to_author": "reply_to_author"}
             set_table(self.messages, result.messages[list(columns)].rename(columns=columns))
             self.charts.display(result)
             self.analysis = result
@@ -86,3 +96,4 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(f"Сохранено: {path}")
         except Exception as exc:
             QMessageBox.warning(self, "Ошибка экспорта", str(exc))
+

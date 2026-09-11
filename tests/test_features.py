@@ -43,10 +43,12 @@ def test_exact_profile(tmp_path):
     expected = {"message_count": 6, "median_words_per_message": 2,
                 "mean_words_per_message": 2, "one_word_ratio": 2/6,
                 "short_message_ratio": 5/6, "median_series_length": 2,
-                "mean_series_length": 2, "long_series_ratio": 1/3,
+                "series_count": 3, "mean_messages_per_series": 2,
+                "single_message_series_ratio": 1/3, "long_series_ratio": 1/3,
                 "no_standard_final_punctuation_ratio": 4/6,
                 "bracket_ending_ratio": 1/6, "lowercase_start_ratio": 4/6,
-                "multi_sentence_ratio": 1/6, "mean_words_in_multi_message_series": 8/5}
+                "q1_words_per_message": 1.25, "q3_words_per_message": 2,
+                "iqr_words_per_message": .75}
     for key, value in expected.items():
         assert p[key] == pytest.approx(value), key
 
@@ -56,7 +58,8 @@ def test_no_multi_message_series(tmp_path):
     path.write_text("[11.06.2026 14:12] A: 😀", encoding="utf-8")
     df = parse_chat(str(path))
     result = analyze_author(df, "A")
-    assert result.profile["mean_words_in_multi_message_series"] is None
+    assert result.profile["lowercase_start_ratio"] is None
     assert result.profile["short_message_ratio"] == 1
     with pytest.raises(ValueError):
         analyze_author(df, "missing")
+

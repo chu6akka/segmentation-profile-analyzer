@@ -8,6 +8,7 @@ def compare_profiles(a: Analysis, b: Analysis) -> pd.DataFrame:
     for key in METRICS:
         left, right = a.profile[key], b.profile[key]
         difference = abs(left - right) if left is not None and right is not None else None
-        rows.append({"parameter": key, "profile_a": left, "profile_b": right,
+        rows.append({"parameter": key, "author_a": left, "author_b": right,
                      "absolute_difference": difference})
     return pd.DataFrame(rows)
+

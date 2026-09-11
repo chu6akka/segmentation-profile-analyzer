@@ -41,9 +41,9 @@ def test_analysis_sorting_charts_and_invalidation(window, app):
     app.processEvents()
     assert widget.analysis.profile["message_count"] == 3
     assert len(widget.charts.figure.axes) == 3
-    widget.messages.sortByColumn(3, Qt.SortOrder.AscendingOrder)
+    widget.messages.sortByColumn(4, Qt.SortOrder.AscendingOrder)
     model = widget.messages.model()
-    assert [model.data(model.index(i, 3)) for i in range(3)] == ["1", "2", "10"]
+    assert [model.data(model.index(i, 4)) for i in range(3)] == ["1", "2", "10"]
     widget.picker.authors.setCurrentText("B")
     assert widget.analysis is None
     assert not widget.xlsx_button.isEnabled()
@@ -65,8 +65,9 @@ def test_gui_exports_and_comparison(window, app, tmp_path, monkeypatch):
     tab.analyze()
     assert tab.results[0].profile["message_count"] == 3
     assert tab.results[1].profile["message_count"] == 1
-    assert tab.table.model().rowCount() == 13
+    assert tab.table.model().rowCount() == 16
     tab.save(True)
-    assert load_workbook(target).sheetnames == ["Profile_A", "Profile_B", "Comparison"]
+    assert load_workbook(target).sheetnames == ["Author_A", "Author_B", "Between_Author_Comparison"]
     tab.b.authors.setCurrentText("A")
     assert tab.results is None and not tab.xlsx_button.isEnabled()
+

@@ -45,7 +45,7 @@ def parse_chat(path: str) -> pd.DataFrame:
         for line in current.pop("_lines"):
             if line.lstrip().startswith(">"):
                 quotes.append(line)
-            elif line.strip().casefold() in MEDIA_MARKERS | SERVICE_MARKERS:
+            elif _normalized_marker(line) in MEDIA_MARKERS | SERVICE_MARKERS:
                 diagnostics["ignored_lines"] += 1
             else:
                 own.append(line)
@@ -66,17 +66,18 @@ def parse_chat(path: str) -> pd.DataFrame:
                 moment = datetime.strptime(stamp, "%d.%m.%Y %H:%M:%S" if stamp.count(":") == 2 else "%d.%m.%Y %H:%M")
             except ValueError as exc:
                 raise ValueError(f"Некорректная дата в строке {line_number}: {stamp}") from exc
-            author, sep, target = attribution.partition(" в ответ ")
-            author, target = author.strip(), target.strip()
-            if not author or (sep and not target):
+            reply = re.match(r"^(.*?)\s+(?:в ответ|in reply to)\s+(.+)$", attribution, re.IGNORECASE)
+            author = (reply.group(1) if reply else attribution).strip()
+            target = reply.group(2).strip() if reply else ""
+            if not author or (reply and not target):
                 raise ValueError(f"Не указан автор или адресат ответа в строке {line_number}")
             if author != previous_author:
                 turn_id += 1
             previous_author = author
             diagnostics["headers"] += 1
             current = {"message_id": diagnostics["headers"], "datetime": moment,
-                       "author": author, "is_reply": bool(sep),
-                       "reply_to_author": target if sep else None,
+                       "author": author, "is_reply": bool(reply),
+                       "reply_to_author": target if reply else None,
                        "source_file": source.name, "_turn_id": turn_id,
                        "_lines": [first_line]}
         elif DATED_LINE.match(line):
@@ -97,3 +98,11 @@ def parse_chat(path: str) -> pd.DataFrame:
     diagnostics["chronology_inversions"] = int((frame["datetime"].diff().dt.total_seconds() < 0).sum())
     frame.attrs["diagnostics"] = diagnostics
     return frame
+
+
+def _normalized_marker(line: str) -> str:
+    """Normalize harmless whitespace inside exact bracketed media markers."""
+    value = line.strip().casefold()
+    match = re.fullmatch(r"\[\s*(.*?)\s*\]", value)
+    return f"[{match.group(1)}]" if match else value
+

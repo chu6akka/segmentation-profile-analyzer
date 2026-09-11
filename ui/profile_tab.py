@@ -1,7 +1,7 @@
 import pandas as pd
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QTableView
 
-from features import METRICS
+from features import SEGMENTATION_METRICS, BOUNDARY_METRICS
 from ui.common import set_table
 
 
@@ -27,10 +27,13 @@ class ProfileTab(QWidget):
         p = analysis.profile
         self.heading.setText(f"{p['author']}  •  {p['source_file']}  •  {len(analysis.series)} серий")
         rows = []
-        for key, label in METRICS.items():
-            value = p[key]
-            shown = "—" if value is None else (f"{value:.2%}" if key.endswith("ratio") else f"{value:.3f}".rstrip("0").rstrip("."))
-            rows.append({"Параметр": label, "Значение": shown})
+        for block, metrics in (("A. Параметры сегментации", SEGMENTATION_METRICS),
+                               ("B. Оформление границ сообщений", BOUNDARY_METRICS)):
+            for key, label in metrics.items():
+                value = p[key]
+                shown = "—" if value is None else (f"{value:.2%}" if key.endswith("ratio") else f"{value:.3f}".rstrip("0").rstrip("."))
+                rows.append({"Блок": block, "Параметр": label, "Значение": shown})
         set_table(self.table, pd.DataFrame(rows))
         self.table.setSortingEnabled(False)
-        self.table.setColumnWidth(0, 660)
+        self.table.setColumnWidth(1, 560)
+
